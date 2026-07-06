@@ -5,15 +5,16 @@
 
 const CFG = window.KANBAN_CONFIG;
 
-if (!CFG || !CFG.SUPABASE_URL || !CFG.SUPABASE_KEY || !CFG.APP_USER || !CFG.APP_PASSWORD) {
+if (!CFG || !CFG.SUPABASE_URL || !CFG.SUPABASE_KEY || !CFG.APP_USER || !CFG.APP_EMAIL) {
   document.getElementById("board").innerHTML = `
     <div class="setup-notice">
       <h2>Hiányzó konfiguráció</h2>
       <p>Nem található a <code>config.js</code> fájl (vagy hiányosak az adatai).</p>
       <p>Másold le a <code>config.example.js</code> fájlt <code>config.js</code> néven,
       és töltsd ki a Supabase projekt URL-jét és publishable kulcsát
-      (Supabase Dashboard → Settings → API), valamint az alkalmazás
-      bejelentkezési adatait (<code>APP_USER</code>, <code>APP_PASSWORD</code>).</p>
+      (Supabase Dashboard → Settings → API), valamint a bejelentkezéshez használt
+      felhasználónevet és a Supabase Auth felhasználó e-mail címét
+      (<code>APP_USER</code>, <code>APP_EMAIL</code>).</p>
     </div>`;
   throw new Error("Hiányzó KANBAN_CONFIG — lásd config.example.js");
 }
@@ -383,23 +384,22 @@ document.getElementById("btn-confirm-delete").addEventListener("click", async ()
   toast(`„${t ? t.title : id}” törölve`, "success");
 });
 
-/* ---------- Bejelentkezés ---------- */
+/* ---------- Bejelentkezés (Supabase Auth) ---------- */
 
-const AUTH_KEY = "kanban_auth_user";
 const loginModal = document.getElementById("login-modal");
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
+let authUser = null; // a bejelentkezett Supabase felhasználó
 
-function currentUser() {
-  return sessionStorage.getItem(AUTH_KEY);
+function displayName(user) {
+  return (user.user_metadata && user.user_metadata.username) || user.email;
 }
 
 function applyAuthUI() {
-  const user = currentUser();
   const chip = document.getElementById("user-chip");
-  chip.textContent = user ? `👤 ${user}` : "";
-  chip.classList.toggle("hidden", !user);
-  document.getElementById("btn-logout").classList.toggle("hidden", !user);
+  chip.textContent = authUser ? `👤 ${displayName(authUser)}` : "";
+  chip.classList.toggle("hidden", !authUser);
+  document.getElementById("btn-logout").classList.toggle("hidden", !authUser);
 }
 
 function showLogin() {
@@ -407,32 +407,60 @@ function showLogin() {
   document.getElementById("l-user").focus();
 }
 
-loginForm.addEventListener("submit", (e) => {
+function showLoginError(message) {
+  loginError.textContent = message;
+  loginError.classList.remove("hidden");
+  document.getElementById("l-pass").value = "";
+  document.getElementById("l-pass").focus();
+  const box = loginModal.querySelector(".modal");
+  box.classList.remove("shake");
+  void box.offsetWidth; // restart the animation
+  box.classList.add("shake");
+}
+
+loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const user = document.getElementById("l-user").value.trim();
+  const name = document.getElementById("l-user").value.trim();
   const pass = document.getElementById("l-pass").value;
 
-  if (user === CFG.APP_USER && pass === CFG.APP_PASSWORD) {
-    sessionStorage.setItem(AUTH_KEY, user);
-    loginModal.classList.add("hidden");
-    loginError.classList.add("hidden");
-    loginForm.reset();
-    applyAuthUI();
-    loadTickets();
-    toast(`Üdv, ${user}! Sikeres bejelentkezés.`, "success");
-  } else {
-    loginError.classList.remove("hidden");
-    document.getElementById("l-pass").value = "";
-    document.getElementById("l-pass").focus();
-    const box = loginModal.querySelector(".modal");
-    box.classList.remove("shake");
-    void box.offsetWidth; // restart the animation
-    box.classList.add("shake");
+  // A felhasználónevet a Supabase Auth e-mail címére képezzük le;
+  // a jelszót maga a Supabase Auth ellenőrzi (itt nincs tárolt jelszó).
+  let email = null;
+  if (name.includes("@")) email = name;
+  else if (name.toLowerCase() === String(CFG.APP_USER).toLowerCase()) email = CFG.APP_EMAIL;
+
+  if (!email) {
+    showLoginError("Hibás felhasználónév vagy jelszó!");
+    return;
   }
+
+  const btn = document.getElementById("btn-login");
+  btn.disabled = true;
+  btn.textContent = "Belépés…";
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false;
+  btn.textContent = "Belépés";
+
+  if (error) {
+    showLoginError(
+      /invalid login credentials/i.test(error.message)
+        ? "Hibás felhasználónév vagy jelszó!"
+        : "Sikertelen belépés: " + error.message
+    );
+    return;
+  }
+
+  authUser = data.user;
+  loginModal.classList.add("hidden");
+  loginError.classList.add("hidden");
+  loginForm.reset();
+  applyAuthUI();
+  loadTickets();
+  toast(`Üdv, ${displayName(authUser)}! Sikeres bejelentkezés.`, "success");
 });
 
-document.getElementById("btn-logout").addEventListener("click", () => {
-  sessionStorage.removeItem(AUTH_KEY);
+document.getElementById("btn-logout").addEventListener("click", async () => {
+  await sb.auth.signOut();
   location.reload();
 });
 
@@ -464,6 +492,12 @@ document.getElementById("btn-new-ticket").addEventListener("click", () => openTi
 
 buildBoard();
 renderAll();
-applyAuthUI();
-if (currentUser()) loadTickets();
-else showLogin();
+(async () => {
+  // A supabase-js a munkamenetet localStorage-ban tárolja és automatikusan
+  // frissíti a tokent — érvényes session esetén nem kell újra belépni.
+  const { data: { session } } = await sb.auth.getSession();
+  authUser = session ? session.user : null;
+  applyAuthUI();
+  if (authUser) loadTickets();
+  else showLogin();
+})();
