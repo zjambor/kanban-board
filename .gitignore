@@ -4,3 +4,11 @@ config.js
 
 # Local Claude Code settings (session permission allowlist)
 .claude/settings.json
+
+# GitHub Pages / Jekyll (from repo template)
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+/vendor
+Gemfile.lock
