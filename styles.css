@@ -358,6 +358,7 @@ body {
 .required { color: var(--error); }
 
 .form-group input[type="text"],
+.form-group input[type="password"],
 .form-group textarea,
 .form-group select {
   width: 100%;
@@ -421,6 +422,43 @@ body {
   justify-content: flex-end;
   gap: .6rem;
   margin-top: 1.1rem;
+}
+
+/* ---------- Bejelentkezés ---------- */
+
+.hidden { display: none !important; }
+
+.login-overlay {
+  background: rgba(4, 7, 14, .88);
+  backdrop-filter: blur(10px);
+}
+
+.login-error {
+  color: var(--error);
+  font-size: .85rem;
+  font-weight: 600;
+  margin: -.3rem 0 .6rem;
+}
+
+.user-chip {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--blue-bright);
+  background: rgba(59, 130, 246, .12);
+  border: 1px solid rgba(59, 130, 246, .4);
+  border-radius: 999px;
+  padding: .25rem .7rem;
+  white-space: nowrap;
+}
+
+.modal.shake { animation: shake .35s ease; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-9px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(4px); }
 }
 
 /* ---------- Toast ---------- */

@@ -5,14 +5,15 @@
 
 const CFG = window.KANBAN_CONFIG;
 
-if (!CFG || !CFG.SUPABASE_URL || !CFG.SUPABASE_KEY) {
+if (!CFG || !CFG.SUPABASE_URL || !CFG.SUPABASE_KEY || !CFG.APP_USER || !CFG.APP_PASSWORD) {
   document.getElementById("board").innerHTML = `
     <div class="setup-notice">
       <h2>Hiányzó konfiguráció</h2>
       <p>Nem található a <code>config.js</code> fájl (vagy hiányosak az adatai).</p>
       <p>Másold le a <code>config.example.js</code> fájlt <code>config.js</code> néven,
       és töltsd ki a Supabase projekt URL-jét és publishable kulcsát
-      (Supabase Dashboard → Settings → API).</p>
+      (Supabase Dashboard → Settings → API), valamint az alkalmazás
+      bejelentkezési adatait (<code>APP_USER</code>, <code>APP_PASSWORD</code>).</p>
     </div>`;
   throw new Error("Hiányzó KANBAN_CONFIG — lásd config.example.js");
 }
@@ -382,6 +383,59 @@ document.getElementById("btn-confirm-delete").addEventListener("click", async ()
   toast(`„${t ? t.title : id}” törölve`, "success");
 });
 
+/* ---------- Bejelentkezés ---------- */
+
+const AUTH_KEY = "kanban_auth_user";
+const loginModal = document.getElementById("login-modal");
+const loginForm = document.getElementById("login-form");
+const loginError = document.getElementById("login-error");
+
+function currentUser() {
+  return sessionStorage.getItem(AUTH_KEY);
+}
+
+function applyAuthUI() {
+  const user = currentUser();
+  const chip = document.getElementById("user-chip");
+  chip.textContent = user ? `👤 ${user}` : "";
+  chip.classList.toggle("hidden", !user);
+  document.getElementById("btn-logout").classList.toggle("hidden", !user);
+}
+
+function showLogin() {
+  loginModal.classList.remove("hidden");
+  document.getElementById("l-user").focus();
+}
+
+loginForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const user = document.getElementById("l-user").value.trim();
+  const pass = document.getElementById("l-pass").value;
+
+  if (user === CFG.APP_USER && pass === CFG.APP_PASSWORD) {
+    sessionStorage.setItem(AUTH_KEY, user);
+    loginModal.classList.add("hidden");
+    loginError.classList.add("hidden");
+    loginForm.reset();
+    applyAuthUI();
+    loadTickets();
+    toast(`Üdv, ${user}! Sikeres bejelentkezés.`, "success");
+  } else {
+    loginError.classList.remove("hidden");
+    document.getElementById("l-pass").value = "";
+    document.getElementById("l-pass").focus();
+    const box = loginModal.querySelector(".modal");
+    box.classList.remove("shake");
+    void box.offsetWidth; // restart the animation
+    box.classList.add("shake");
+  }
+});
+
+document.getElementById("btn-logout").addEventListener("click", () => {
+  sessionStorage.removeItem(AUTH_KEY);
+  location.reload();
+});
+
 /* ---------- Kattintás-kezelés (delegálva) ---------- */
 
 boardEl.addEventListener("click", (e) => {
@@ -410,4 +464,6 @@ document.getElementById("btn-new-ticket").addEventListener("click", () => openTi
 
 buildBoard();
 renderAll();
-loadTickets();
+applyAuthUI();
+if (currentUser()) loadTickets();
+else showLogin();

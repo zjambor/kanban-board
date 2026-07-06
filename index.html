@@ -16,6 +16,8 @@
     </div>
     <div class="header-actions">
       <span id="connection-status" class="conn-status" title="Kapcsolat állapota"></span>
+      <span id="user-chip" class="user-chip hidden"></span>
+      <button id="btn-logout" class="btn btn-ghost hidden">Kijelentkezés</button>
       <button id="btn-new-ticket" class="btn btn-primary">+ Új ticket</button>
     </div>
   </header>
@@ -23,6 +25,29 @@
   <main id="board" class="board" aria-label="Kanban tábla">
     <!-- Oszlopokat a JS generálja -->
   </main>
+
+  <!-- Bejelentkezés modal -->
+  <div id="login-modal" class="modal-overlay login-overlay hidden">
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="login-title">
+      <div class="modal-header">
+        <h2 id="login-title">🔒 Bejelentkezés</h2>
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="l-user">Felhasználónév</label>
+          <input type="text" id="l-user" autocomplete="username" required placeholder="Felhasználónév">
+        </div>
+        <div class="form-group">
+          <label for="l-pass">Jelszó</label>
+          <input type="password" id="l-pass" autocomplete="current-password" required placeholder="••••••••">
+        </div>
+        <p id="login-error" class="login-error hidden">Hibás felhasználónév vagy jelszó!</p>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" id="btn-login">Belépés</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Ticket létrehozás / szerkesztés modal -->
   <div id="ticket-modal" class="modal-overlay hidden">

@@ -16,6 +16,8 @@ az adatokat közvetlenül a [Supabase](https://supabase.com) REST API-ján keres
 - **Toast értesítések**: minden műveletről visszajelzés
 - **Reszponzív**: vízszintesen görgethető tábla, kis képernyőn is használható
 - **Dark mode**: sötét téma, kék fő színnel
+- **Bejelentkezés**: induláskor felugró ablak kér felhasználónevet és jelszót;
+  a munkamenet a lap bezárásáig él, a fejlécből ki lehet jelentkezni
 
 ## Fájlok
 
@@ -36,13 +38,19 @@ az adatokat közvetlenül a [Supabase](https://supabase.com) REST API-ján keres
    cp config.example.js config.js
    ```
 
-2. **Töltsd ki a `config.js`-t** a Supabase projekted adataival
-   (Dashboard → Project Settings → API):
-   - `SUPABASE_URL` — a projekt URL-je
+2. **Töltsd ki a `config.js`-t**:
+   - `SUPABASE_URL` — a Supabase projekt URL-je (Dashboard → Project Settings → API)
    - `SUPABASE_KEY` — a *publishable* (nyilvános) API kulcs
+   - `APP_USER`, `APP_PASSWORD` — az alkalmazás bejelentkezési adatai
+     (ezekkel enged be a felugró login ablak)
 
    > A `config.js` és a `.env` a `.gitignore`-ban szerepel, így hitelesítő adat
    > nem kerül a repóba. Titkos (secret/service) kulcsot **soha** ne tegyél ide!
+   >
+   > **Fontos:** a bejelentkezés kliensoldali kapu — a felületet védi, de aki a
+   > gépen hozzáfér a `config.js`-hez vagy a nyilvános API kulcshoz, az az adatokat
+   > közvetlenül is elérheti. Valódi, többfelhasználós védelemhez Supabase Auth
+   > + szigorított RLS szabályok javasoltak.
 
 3. **Nyisd meg az `index.html`-t** böngészőben — nincs build lépés és nem kell
    szerver sem. (Opcionálisan bármilyen statikus kiszolgálóval is futtatható,
