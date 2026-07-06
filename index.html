@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kanban Board</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="app-title">
+      <span class="logo">▦</span>
+      <h1>Kanban <span class="accent">Board</span></h1>
+    </div>
+    <div class="header-actions">
+      <span id="connection-status" class="conn-status" title="Kapcsolat állapota"></span>
+      <button id="btn-new-ticket" class="btn btn-primary">+ Új ticket</button>
+    </div>
+  </header>
+
+  <main id="board" class="board" aria-label="Kanban tábla">
+    <!-- Oszlopokat a JS generálja -->
+  </main>
+
+  <!-- Ticket létrehozás / szerkesztés modal -->
+  <div id="ticket-modal" class="modal-overlay hidden">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <h2 id="modal-title">Új ticket</h2>
+        <button class="btn-icon modal-close" data-close aria-label="Bezárás">✕</button>
+      </div>
+      <form id="ticket-form">
+        <input type="hidden" id="f-id">
+        <input type="hidden" id="f-status">
+        <div class="form-group">
+          <label for="f-title">Cím <span class="required">*</span></label>
+          <input type="text" id="f-title" maxlength="200" required placeholder="Mit kell megcsinálni?">
+        </div>
+        <div class="form-group">
+          <label for="f-description">Leírás</label>
+          <textarea id="f-description" rows="4" placeholder="Részletek (opcionális)…"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Prioritás</label>
+          <div class="priority-picker" id="f-priority">
+            <label class="prio-pill prio-low"><input type="radio" name="priority" value="LOW"><span>Alacsony</span></label>
+            <label class="prio-pill prio-medium"><input type="radio" name="priority" value="MEDIUM" checked><span>Közepes</span></label>
+            <label class="prio-pill prio-high"><input type="radio" name="priority" value="HIGH"><span>Magas</span></label>
+          </div>
+        </div>
+        <div class="form-group" id="status-group">
+          <label for="f-status-select">Oszlop</label>
+          <select id="f-status-select"></select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-close>Mégse</button>
+          <button type="submit" class="btn btn-primary" id="btn-save">Mentés</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Törlés megerősítő modal -->
+  <div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal modal-sm" role="alertdialog" aria-modal="true">
+      <div class="modal-header">
+        <h2>Ticket törlése</h2>
+        <button class="btn-icon modal-close" data-close aria-label="Bezárás">✕</button>
+      </div>
+      <p id="confirm-text" class="confirm-text"></p>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close>Mégse</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete">Törlés</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast értesítések -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Supabase JS kliens (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- Helyi konfiguráció (nincs verziókezelve — lásd config.example.js) -->
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
